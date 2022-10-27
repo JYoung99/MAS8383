@@ -90,9 +90,9 @@ The high value we obtained for the generalized variance is an indicator that the
 variables in our data exhibit little correlation among themselves, and the
 total variation may be used when performing principal component analysis.
 
-### (c) - Standardizing the data matrix
+### (c) - Standardising the data matrix
 
-An important practice in PCA is the standardizing of data - this means that
+An important practice in PCA is the standardising of data - this means that
 the features are scaled such that they are distributed around a mean of zero
 with a standard deviation of one. We may then go ahead and compare covariances
 for pairs of features in our data, but we shall first check that our assumptions
@@ -123,15 +123,27 @@ standard_cov_matrix <- cov(airpollution_standard)
 all.equal(round(cor_matrix,10), round(standard_cov_matrix,10))
 ```
 
-As we have now verified our assumptions made about the standardized data matrix,
+As we have now verified our assumptions made about the standardised data matrix,
 we may proceed to perform PCA on the data.
 
-## Including Plots
+## Principal Component Analysis
 
-You can also embed plots, for example:
+### Which matrix?
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+When examining the sample variances for the 11 variables in our data, we find
+the following:
+
+```{r variances}
+apply(airpollution, 2, var)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Notice that, for example, the variance of the `PM2' variable is significantly
+larger than that of the `LPOP' variable. As PCA is not
+scale invariant, this could affect our analysis as if several components have
+a larger mean/variance than others in the data, they will dominate our PCA if
+based on our covariance matrix $S$. Therefore, we shall instead choose a PCA 
+based on the spectral decomposition of the sample correlation matrix, which is
+equivalent to performing the analysis on the standardised data.
+
+## Performing a PCA on the standardised data
+

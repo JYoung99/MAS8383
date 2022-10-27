@@ -7,12 +7,13 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+install.packages("nclSLR", repos="http://R-Forge.R-project.org")
 library(nclSLR)
 library(ggplot2)
 library(tidyr)
 ```
 
-## Summarising the airpollution data
+## 1 - Summarising the airpollution data
 
 ### (a) - Numerical and graphical summaries of the data
 
@@ -25,6 +26,7 @@ summary(airpollution)
 We can also visualize this information using histogram plots for each variable - 
 these give us a little more insight as to how the values are distributed:
 ```{r boxplots, message=FALSE}
+## Produce histograms of each variable in the airpollution data
 ggplot(gather(airpollution), aes(value)) +
   geom_histogram(bins = 10) +
   facet_wrap(~key, scales = 'free_x')
@@ -48,6 +50,7 @@ good alternative for this is to use a correlation heatmap instead, which
 colour-codes variable pairs based on their correlation coefficient:
 
 ```{r pairs}
+## Produce a correlation heatmap based on the data matrix
 cor_matrix <- cor(airpollution)
 corrplot::corrplot(cor_matrix)
 ```
@@ -69,6 +72,7 @@ Using R, we can compute the sample covariance matrix $S$ by simply feeding
 our data matrix to the `var` function like so:
 
 ```{r Variances}
+## Compute the sample covariance matrix S
 S <- var(airpollution)
 S
 ```
@@ -85,10 +89,6 @@ We can also compute the total variation by taking the trace of the matrix:
 totvar <- sum(apply(airpollution, 2, var))
 totvar
 ```
-
-The high value we obtained for the generalized variance is an indicator that the
-variables in our data exhibit little correlation among themselves, and the
-total variation may be used when performing principal component analysis.
 
 ### (c) - Standardising the data matrix
 
@@ -126,7 +126,7 @@ all.equal(round(cor_matrix,10), round(standard_cov_matrix,10))
 As we have now verified our assumptions made about the standardised data matrix,
 we may proceed to perform PCA on the data.
 
-## Principal Component Analysis
+## 2 - Principal Component Analysis
 
 ### Which matrix?
 
@@ -145,5 +145,54 @@ based on our covariance matrix $S$. Therefore, we shall instead choose a PCA
 based on the spectral decomposition of the sample correlation matrix, which is
 equivalent to performing the analysis on the standardised data.
 
-## Performing a PCA on the standardised data
+### (b) Performing PCA on the standardised data
+
+Now we have decided to perform our analysis on the sample correlation matrix,
+we can start our analysis.
+
+```{r PCA}
+## Perform PCA on the sample correlation matrix
+pca_airpol <- prcomp(airpollution, scale = TRUE)
+pca_airpol
+```
+To begin to draw some insights from our PCA, we can extract components
+individually, like so:
+```{r PCA components}
+## Compute the variances of each principal component
+pca_airpol$sdev^2
+
+## Extract the loadings matrix
+pca_airpol$rotation
+
+```
+By using the loadings matrix, we find that the first principal component is
+given by:
+
+$$
+\begin{aligned}
+  \texttt{PC1} = 0.261\texttt{SMIN} + 0.450\texttt{SMEAN} + 0.399\texttt{SMAX} + 0.313\texttt{PMIN}  + 0.387\texttt{PMEAN} + 0.252\texttt{PMAX} + \\0.240\texttt{PM2} + 0.207\texttt{PERWH} + 0.276\texttt{NONPOOR} + 0.106\texttt{GE65} + 0.265\texttt{LPOP}
+\end{aligned}
+$$
+
+As we can see, the first principal component isn't particularly dominated by any
+one of our variables here, as all of our coefficients fall between $+0.1$ and
+$+0.5$. We find that the higher coefficients have been generally attributed to
+sulphate and particulate readings however, so we may interpret our first
+principal component as a weighted average of pollution rates. Cities with
+higher readings of pollution will have larger component scores - and all scores
+will be positive for this component as there are no negative coefficients.
+
+Moving on to the second principal component:
+
+$$
+\begin{aligned}
+  \texttt{PC2} = 0.190\texttt{SMIN} - 0.013\texttt{SMEAN} - 0.134\texttt{SMAX} - 0.227\texttt{PMIN}  - 0.340\texttt{PMEAN} - 0.345\texttt{PMAX} + \\0.146\texttt{PM2} + 0.459\texttt{PERWH} + 0.365\texttt{NONPOOR} + 0.540\texttt{GE65} + 0.041\texttt{LPOP}
+\end{aligned}
+$$
+
+The second principal component differs from the first in that it contains both
+positive and negative coefficients for the variables. Generally speaking, 
+```{r}
+
+```
 

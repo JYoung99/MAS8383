@@ -12,7 +12,9 @@ library(ggplot2)
 library(tidyr)
 ```
 
-## Numerical and Graphical summaries
+## Summarising the airpollution data
+
+### (a) - Numerical and graphical summaries of the data
 
 We start by selecting the `airpollution` dataset from our package. We can draw immediate insights using the summary function - as shown below, this shows us all of the variables in our data as well as some summary statistics for each variable:
 
@@ -31,7 +33,8 @@ ggplot(gather(airpollution), aes(value)) +
 
 As above, we see a variety of distributions present in our data. For example,
 some seem to roughly follow a normal distribution, whereas others do not, such
-as the 'PM2' variable which appears to follow an exponential distribution.
+as the 'PM2' variable which appears to approximately follow an exponential
+distribution.
 
 We can check the dimensions of the data like so:
 ```{r dims}
@@ -45,12 +48,84 @@ good alternative for this is to use a correlation heatmap instead, which
 colour-codes variable pairs based on their correlation coefficient:
 
 ```{r pairs}
-cor(airpollution)
-corrplot::corrplot(cor(airpollution))
+cor_matrix <- cor(airpollution)
+corrplot::corrplot(cor_matrix)
 ```
 
 For example, we can see here that there is a fairly strong correlation between
 variables 'PERWH' and 'NONPOOR'.
+
+### (b) - Variation in the data
+
+As stated in Section 1.4.4 in the course notes, we have the following two 
+measures of multivariate scatter:
+
+1. **Generalised variance:** $\text{det}(S) = \lvert S\rvert$, the determinant
+of the sample covariance matrix,
+2. **Total variation:** $\text{tr}(S)$, the trace of the sample covariance
+matrix.
+
+Using R, we can compute the sample covariance matrix $S$ by simply feeding
+our data matrix to the `var` function like so:
+
+```{r Variances}
+S <- var(airpollution)
+S
+```
+
+Now we have computed $S$, we can find the generalized variance by computing the
+determinant:
+
+```{r genvar}
+genvar <- det(S)
+genvar
+```
+We can also compute the total variation by taking the trace of the matrix:
+```{r totvar}
+totvar <- sum(apply(airpollution, 2, var))
+totvar
+```
+
+The high value we obtained for the generalized variance is an indicator that the
+variables in our data exhibit little correlation among themselves, and the
+total variation may be used when performing principal component analysis.
+
+### (c) - Standardizing the data matrix
+
+An important practice in PCA is the standardizing of data - this means that
+the features are scaled such that they are distributed around a mean of zero
+with a standard deviation of one. We may then go ahead and compare covariances
+for pairs of features in our data, but we shall first check that our assumptions
+hold by performing standardisation on the `airpollution` data.
+
+```{r standard}
+airpollution_standard <- scale(airpollution)
+```
+
+Now we have our standardized data, we can check that the sample mean vector is
+composed of zeros:
+
+```{r meanvec}
+## Round values to 10 decimal places to account for rounding errors
+standard_mean_vec <- round(colMeans(airpollution_standard),10)
+standard_mean_vec
+```
+
+We must also check that the sample covariance matrix
+is equal to the sample correlation matrix of the original `airpollution` data.
+We can check these matrices are identical using the `all.equal` function:
+
+```{r}
+## Take the covariance matrix of the standardised data
+standard_cov_matrix <- cov(airpollution_standard)
+## Again accounting for rounding issues, check the new covariance matrix
+## is equal to the original correlation matrix
+all.equal(round(cor_matrix,10), round(standard_cov_matrix,10))
+```
+
+As we have now verified our assumptions made about the standardized data matrix,
+we may proceed to perform PCA on the data.
+
 ## Including Plots
 
 You can also embed plots, for example:

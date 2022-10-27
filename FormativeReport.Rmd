@@ -7,7 +7,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-install.packages("nclSLR", repos="http://R-Forge.R-project.org")
 library(nclSLR)
 library(ggplot2)
 library(tidyr)
@@ -137,8 +136,8 @@ the following:
 apply(airpollution, 2, var)
 ```
 
-Notice that, for example, the variance of the `PM2' variable is significantly
-larger than that of the `LPOP' variable. As PCA is not
+Notice that, for example, the variance of the `PM2` variable is significantly
+larger than that of the `LPOP` variable. As PCA is not
 scale invariant, this could affect our analysis as if several components have
 a larger mean/variance than others in the data, they will dominate our PCA if
 based on our covariance matrix $S$. Therefore, we shall instead choose a PCA 
@@ -191,8 +190,21 @@ $$
 $$
 
 The second principal component differs from the first in that it contains both
-positive and negative coefficients for the variables. Generally speaking, 
-```{r}
+positive and negative coefficients for the variables. Generally speaking, the
+demographic factors have positive coefficients, with the `GE65` variable the
+largest in absolute value of these. On the other hand, the pollution-related
+variables generally have been attributed with positive coefficients - especially
+the particulate readings. Therefore, we could interpret that cities with lower
+pollution rates and more white, less deprived and older populations will have
+a high PC score for PC2, and vice versa.
+
+### How many Principal Components?
+
+Now we have our principal components, we can decide how many to use 
+
+```{r variance proportion}
+prop_var <- pca_airpol$sdev^2 / sum(pca_airpol$sdev^2)
+head(prop_var)
 
 ```
 

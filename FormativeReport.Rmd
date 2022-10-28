@@ -34,7 +34,7 @@ ggplot(gather(airpollution), aes(value)) +
 
 As above, we see a variety of distributions present in our data. For example,
 some seem to roughly follow a normal distribution, whereas others do not, such
-as the 'PM2' variable which appears to approximately follow an exponential
+as the `PM2` variable which appears to approximately follow an exponential
 distribution.
 
 We can check the dimensions of the data like so:
@@ -55,7 +55,8 @@ corrplot::corrplot(cor_matrix)
 ```
 
 For example, we can see here that there is a fairly strong correlation between
-variables 'PERWH' and 'NONPOOR'.
+variables 'PERWH' and 'NONPOOR', however there are very few variables present
+that show strong intercorrelation.
 
 ### (b) - Variation in the data
 
@@ -91,13 +92,14 @@ totvar
 
 ### (c) - Standardising the data matrix
 
-An important practice in PCA is the standardising of data - this means that
+An important practice in PCA is the standardizing of data - this means that
 the features are scaled such that they are distributed around a mean of zero
 with a standard deviation of one. We may then go ahead and compare covariances
 for pairs of features in our data, but we shall first check that our assumptions
-hold by performing standardisation on the `airpollution` data.
+hold by performing standardization on the `airpollution` data.
 
 ```{r standard}
+## Standardize the airpollution data
 airpollution_standard <- scale(airpollution)
 ```
 
@@ -127,12 +129,13 @@ we may proceed to perform PCA on the data.
 
 ## 2 - Principal Component Analysis
 
-### Which matrix?
+### (a) - Which matrix?
 
 When examining the sample variances for the 11 variables in our data, we find
 the following:
 
 ```{r variances}
+## Take the individual variances for each variable in airpollution
 apply(airpollution, 2, var)
 ```
 
@@ -144,7 +147,7 @@ based on our covariance matrix $S$. Therefore, we shall instead choose a PCA
 based on the spectral decomposition of the sample correlation matrix, which is
 equivalent to performing the analysis on the standardised data.
 
-### (b) Performing PCA on the standardised data
+### (b) - Performing PCA on the standardised data
 
 Now we have decided to perform our analysis on the sample correlation matrix,
 we can start our analysis.
@@ -178,8 +181,8 @@ one of our variables here, as all of our coefficients fall between $+0.1$ and
 $+0.5$. We find that the higher coefficients have been generally attributed to
 sulphate and particulate readings however, so we may interpret our first
 principal component as a weighted average of pollution rates. Cities with
-higher readings of pollution will have larger component scores - and all scores
-will be positive for this component as there are no negative coefficients.
+higher readings of pollution will have larger scores for PC1, but more generally
+cities with high values across the 11 variables will score highly here.
 
 Moving on to the second principal component:
 
@@ -196,15 +199,68 @@ largest in absolute value of these. On the other hand, the pollution-related
 variables generally have been attributed with positive coefficients - especially
 the particulate readings. Therefore, we could interpret that cities with lower
 pollution rates and more white, less deprived and older populations will have
-a high PC score for PC2, and vice versa.
+a high PC score for PC2, and vice versa. This principal component allows us to
+contrast high pollution rates with our numerical demographic factors.
 
-### How many Principal Components?
+### (c) - How many Principal Components?
 
-Now we have our principal components, we can decide how many to use 
+Now we have our principal components, we can decide how many to use. To do this,
+we use Result 2.1 - that is, we can take the sum of the variances of the
+principal components to be equal to the total variation in the original data.
+Therefore, we may use the variance of one principal component divided by the
+sum over all principal components to be the proportion of variation accounted
+for by our one principal component. R, using the `summary` function calculates
+the proportion of variance and cumulative proportion, as displayed below:
 
 ```{r variance proportion}
-prop_var <- pca_airpol$sdev^2 / sum(pca_airpol$sdev^2)
-head(prop_var)
+summary(pca_airpol)
+```
+
+We can also use a scree plot to help visualize this:
+
+```{r scree}
+plot(pca_airpol, type="lines", main="")
+title(xlab="Component number")
 
 ```
 
+Usually when carrying out an analysis such as this, we would look for a 'kink'
+in our scree plot - i.e. where the gradient of our plot flattens out. Therefore,
+with an appropriate threshold in mind, we notice that the first 4 PCs explain
+around 74% of the total variation, and the remaining 6 components provide little
+in comparison. Therefore with the goal of dimension reduction in mind, we could
+probably disregard the final 6 for the purpose of our analysis.
+
+### (d) - Plotting the first two components
+
+We can plot the first principal component scores against each other, labelling
+the points by the city they represent:
+
+```{r 2compplot, fig.width=10, fig.height=8}
+# Plot the first two principal components against each other
+plot(pca_airpol$x[,1], pca_airpol$x[,2], xlab="First PC", ylab="Second PC")
+# Add labels representing the cities
+text(pca_airpol$x[,1], pca_airpol$x[,2], labels=rownames(airpollution_standard), cex=0.7, pos=3)
+```
+
+From this plot, we can begin to draw some insight from our data based on the
+characteristics we managed to infer about each of the first two principal
+components earlier.
+For example, *CHARLESTON* stands out instantly, as we notice that it has the
+highest score in the data for our first PC, yet the lowest score for PC 2.
+Applying the interpretation we formulated in part (b), this would suggest that
+this city has high rates of pollution present in the air, and that its
+population is less white, more deprived and younger than most cities in our
+data.
+Now consider *JERSEYC* on the top right of the graph - this scores highly on
+both the first and second PC axes. With a high PC 1 score, we infer that this
+city generally had high scores across the 11 variables. However, with a high
+score for PC 2, this interpretation may change. High PC 2 values indicate more
+white, less deprived, and older populations, and as 5 out of 6 of our pollution
+variables are negatively weighted in this PC, this would also suggest low
+pollution levels in this city. Therefore combining these two interpretations,
+it is suggested that this city in particular will have high values across the
+board on our demographic factors outlined. However, as we have only taken the
+first two principal components, which we found to represent just 52% of the
+total variation in our data, we may have to take such interpretations with a
+pinch of salt.
